@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEGUREPASS - Gerador de Senhas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Cabeçalho / Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">SEGURE<span>PASS</span></div>
+            <div class="nav-actions">
+                <span class="user-greeting">Olá, {{ usuario }}</span>
+                <button type="button" class="btn-nav" onclick="abrirModal()">Senhas Salvas ({{ senhas_salvas|length }})</button>
+                <a href="/logout" class="btn-logout">Sair</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Seção Hero -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <span class="badge">Segurança & Praticidade</span>
+            <h1 class="hero-title">GERADOR DE SENHAS</h1>
+            <p class="hero-subtitle">Crie senhas fortes e gerencie suas credenciais com máxima proteção e elegância.</p>
+        </div>
+        <div class="hero-divider">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M1200 0L0 0 0 120 1200 0z" fill="#ffffff"></path>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-wrapper">
+        <div class="app-card">
+            
+            <!-- Bloco 1: Gerar Senha -->
+            <div class="card-section">
+                <h2 class="section-title">Gerar Nova Senha</h2>
+                <form method="POST" class="form-grid">
+                    <div class="input-group">
+                        <label for="tamanho">Comprimento da Senha</label>
+                        <input type="number" id="tamanho" name="tamanho" min="4" max="64" value="16" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Gerar Senha</button>
+                </form>
+            </div>
+
+            <div class="divider-line"></div>
+
+            <!-- Bloco 2: Salvar Senha -->
+            <div class="card-section">
+                <h2 class="section-title">Salvar no Banco</h2>
+                <form action="/salvar" method="POST" class="form-stack">
+                    <div class="input-group">
+                        <label for="servico">Plataforma / Serviço</label>
+                        <input type="text" id="servico" name="servico" placeholder="Ex: Instagram, Google, Netflix" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="senha_para_salvar">Senha para Guardar</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="senha_para_salvar" name="senha_para_salvar" value="{{ senha }}" placeholder="Digite ou utilize a gerada acima" required style="flex: 1;">
+                            {% if senha %}
+                                <button type="button" class="btn-nav" style="background: #0284c7; color: #fff;" onclick="copiarTexto('senha_para_salvar', this)">Copiar</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if forca %}
+                        <div class="status-forca">
+                            Status de Segurança: <strong>{{ forca }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn-secondary">Salvar Credencial</button>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p class="footer-brand">&copy; 2026 Victor. Todos os direitos reservados.</p>
+            <p class="footer-social">
+                Siga no Instagram: <a href="https://instagram.com/vitin.nnc" target="_blank" class="instagram-link">@vitin.nnc</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Modal Flutuante com Busca e Botão Copiar -->
+    <div id="modalSenhas" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Credenciais Armazenadas</h3>
+                <button type="button" class="close-btn" onclick="fecharModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                {% if senhas_salvas %}
+                    <!-- Campo de Busca/Filtro -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <input type="text" id="inputBusca" onkeyup="filtrarPlataformas()" placeholder="🔍 Buscar plataforma...">
+                    </div>
+
+                    <ul class="credentials-list" id="listaCredenciais">
+                        {% for item in senhas_salvas %}
+                            <li class="credential-item">
+                                <div class="credential-info" style="flex: 1;">
+                                    <span class="platform-name" style="font-weight: 700;">{{ item.servico }}</span>
+                                    <div class="password-wrapper">
+                                        <input type="password" value="{{ item.senha }}" id="senha-{{ item.id }}" readonly class="password-field">
+                                        <button type="button" class="toggle-btn" onclick="alternarSenha('senha-{{ item.id }}', this)">Mostrar</button>
+                                        <button type="button" class="toggle-btn" style="color: #10b981;" onclick="copiarTexto('senha-{{ item.id }}', this)">Copiar</button>
+                                    </div>
+                                </div>
+                                <a href="/deletar/{{ item.id }}" class="delete-btn" title="Excluir">Remover</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">Nenhuma senha registrada no momento.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Interatividade -->
+    <script>
+        function abrirModal() {
+            document.getElementById("modalSenhas").style.display = "flex";
+        }
+
+        function fecharModal() {
+            document.getElementById("modalSenhas").style.display = "none";
+        }
+
+        function alternarSenha(idInput, botao) {
+            const input = document.getElementById(idInput);
+            if (input.type === "password") {
+                input.type = "text";
+                botao.textContent = "Ocultar";
+            } else {
+                input.type = "password";
+                botao.textContent = "Mostrar";
+            }
+        }
+
+        // Função de Copiar para a Área de Transferência
+        function copiarTexto(idInput, botao) {
+            const input = document.getElementById(idInput);
+            navigator.clipboard.writeText(input.value).then(() => {
+                const textoOriginal = botao.textContent;
+                botao.textContent = "Copiado!";
+                setTimeout(() => {
+                    botao.textContent = textoOriginal;
+                }, 1500);
+            });
+        }
+
+        // Função de Busca / Filtro no Modal
+        function filtrarPlataformas() {
+            const termo = document.getElementById("inputBusca").value.toLowerCase();
+            const itens = document.querySelectorAll("#listaCredenciais .credential-item");
+
+            itens.forEach(item => {
+                const nomePlataforma = item.querySelector(".platform-name").textContent.toLowerCase();
+                if (nomePlataforma.includes(termo)) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById("modalSenhas");
+            if (event.target === modal) {
+                fecharModal();
+            }
+        }
+    </script>
+
+</body>
+</html>

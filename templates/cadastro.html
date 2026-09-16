@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEGUREPASS - Cadastro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-body">
+    <div class="auth-card">
+        <div class="brand auth-brand">SEGURE<span>PASS</span></div>
+        <h2>Criar Nova Conta</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="form-stack">
+            <div class="input-group">
+                <label>Usuário</label>
+                <input type="text" name="nome" required>
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" name="senha" required>
+            </div>
+            <button type="submit" class="btn-primary">Criar Conta</button>
+        </form>
+        <p class="auth-link">Já tem conta? <a href="/login">Fazer Login</a></p>
+    </div>
+</body>
+</html>
